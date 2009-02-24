@@ -18,7 +18,7 @@ class Prt
       usage
     end
 
-    run_command(command, args)
+    run_command(command, get_ports(*args))
   end
 
   def run_command(command, args)
@@ -26,12 +26,7 @@ class Prt
   end
 
   def cmd_info(*args)
-    port_db = CRUX::PortDB.new
-    prtget_conf = CRUX::PrtGetConf.new
-    args.each do |name|
-      port = CRUX::Port.new name
-      # port = port_db.port(name)
-      # port = prtget_conf.port(name)
+    args.each do |port|
       p port.path
       p port.installed?
       p port.installed_version
@@ -48,8 +43,8 @@ class Prt
 
   def cmd_deptree(*args)
     args.each do |port|
-      puts "Deptre for #{port}"
-      CRUX.each_dep CRUX::Port.new(port)
+      puts "Deptre for #{port.name}"
+      CRUX.each_dep port
     end
   end
 
@@ -61,13 +56,24 @@ class Prt
   end
 
   def cmd_remote_sources(*args)
-    args.each do |name|
-      port = CRUX::Port.new name
+    args.each do |port|
       puts "Port #{port.name}"
       port.port_remote_sources.each do |source|
 	puts "  #{source}"
       end
     end
+  end
+
+  private
+
+  def get_ports(*ports)
+    ports.map do |port_name|
+      case port_name.downcase
+      when "all" : CRUX::PrtGetConf.new.ports
+      when "installed" : CRUX::PortDB.new.ports
+      else CRUX::Port.new port_name
+      end
+    end.flatten
   end
 
 end
