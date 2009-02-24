@@ -21,8 +21,12 @@ module CRUX
     end
 
     def ports
-      Dir.entries(@path).map do |port|
-	Port.new port if File.exists?("#@path/#{port}/Pkgfile")
+      Dir.entries(@path).map do |name|
+	if File.exists?("#@path/#{name}/Pkgfile")
+	  port = Port.new name
+	  port.path = "#@path/#{name}"
+	  port
+	end
       end.compact
     end
 
