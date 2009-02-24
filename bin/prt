@@ -41,7 +41,7 @@ if $0 == __FILE__
   #   puts [port.name, port.installed_version].join ' '
   # end
 
-  port_db.ports.each do |port|
+  CRUX.each_installed_ports do |port|
     puts "Port #{port.name}"
     port.port_remote_sources.each do |source|
       puts "  #{source}"
