@@ -30,11 +30,7 @@ if $0 == __FILE__
     puts
   end
 
-  def each_dep(port, indent = 0)
-    puts "#{"  " * indent}#{port.name}"
-    port.port_dependencies.each {|dep| each_dep(dep,indent + 1)} 
-  end
-  each_dep CRUX::Port.new('apache')
+  CRUX.each_dep CRUX::Port.new('apache')
 
   # puts "Installed ports :"
   # port_db.ports.each do |port|
