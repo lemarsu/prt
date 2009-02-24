@@ -76,4 +76,9 @@ class Prt < Bin
     end
   end
 
+  command :list do |port|
+    installed = port.installed? ? port.installed_version : "(not installed)"
+    puts [port.name, installed].join(' ')
+  end
+
 end
