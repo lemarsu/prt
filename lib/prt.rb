@@ -44,7 +44,10 @@ class Prt
   def cmd_deptree(*args)
     args.each do |port|
       puts "Deptre for #{port.name}"
-      CRUX.each_dep port
+      CRUX.each_dep port do |port, indent|
+	installed = port.installed? ? "[i]" : "[ ]"
+	puts "#{installed} #{"  " * indent}#{port.name}"
+      end
     end
   end
 

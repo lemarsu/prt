@@ -8,9 +8,9 @@ module CRUX
     PortDB.new.ports.each(&blk)
   end
 
-  def self.each_dep(port, indent = 0)
-    puts "#{"  " * indent}#{port.name}"
-    port.port_dependencies.each {|dep| each_dep(dep,indent + 1)}
+  def self.each_dep(port, indent = 0, &blk)
+    yield port, indent
+    port.port_dependencies.each {|dep| each_dep(dep,indent + 1, &blk)}
   end
 
 end
