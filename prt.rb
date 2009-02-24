@@ -1,8 +1,6 @@
 #!/usr/bin/env ruby
 #
 
-require 'rubygems'
-
 class Port
   attr_reader :name
 
