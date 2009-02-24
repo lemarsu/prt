@@ -20,6 +20,12 @@ module CRUX
       port
     end
 
+    def ports
+      Dir.entries(@path).map do |port|
+	Port.new port if File.exists?("#@path/#{port}/Pkgfile")
+      end.compact
+    end
+
     def inspect
       "#<PortDir #{path.inspect}>"
     end

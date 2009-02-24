@@ -34,6 +34,12 @@ module CRUX
       end
     end
 
+    def ports
+      port_dirs.map do |port_dir|
+	port_dir.ports
+      end.flatten.compact
+    end
+
   end
 
 end
