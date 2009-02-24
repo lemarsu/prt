@@ -45,6 +45,7 @@ class Port
   end
 
   def pkgfile
+    return nil unless path
     File.join(path, "Pkgfile")
   end
 
@@ -53,7 +54,7 @@ class Port
   end
 
   def port_remote_sources
-    port_sources.grep %r[^(?:f|ht)tp://]
+    (port_sources||[]).grep %r[^(?:f|ht)tp://]
   end
 
   private
@@ -79,6 +80,7 @@ class Port
   end
 
   def fill_from_pkgfile_raw
+    return if pkgfile.nil?
     File.open pkgfile do |f|
       f.each_line do |line|
 	case line
@@ -99,6 +101,7 @@ class Port
   end
 
   def fill_from_pkgfile_via_sh
+    return if pkgfile.nil?
     ret = `(cat #{pkgfile}; echo 'echo $name $version $release ${source[@]}')|sh`
     name, version, release, *sources = ret.split(/\s+/)
     @port_version = version
@@ -134,6 +137,11 @@ class PortDB
   def port(name)
     read_db unless @ports
     @ports.find {|port| port.name == name}
+  end
+
+  def ports
+    read_db unless @ports
+    @ports
   end
 
   def search_info(name)
@@ -201,6 +209,7 @@ class PrtGetConf
       path = port_dir.get_path(name)
       return path if path
     end
+    nil
   end
 
   def port(name)
@@ -269,4 +278,15 @@ if $0 == __FILE__
   end
   each_dep Port.new('apache')
 
+  # puts "Installed ports :"
+  # port_db.ports.each do |port|
+  #   puts [port.name, port.installed_version].join ' '
+  # end
+
+  port_db.ports.each do |port|
+    puts "Port #{port.name}"
+    port.port_remote_sources.each do |source|
+      puts "  #{source}"
+    end
+  end
 end
