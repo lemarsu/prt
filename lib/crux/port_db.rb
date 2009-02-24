@@ -19,21 +19,22 @@ module CRUX
     end
 
     def search_info(name)
-      each_port_entry do |name, version, files|
-	return {:name => name, :version => version, :files => files}
-      end
+      read_db unless @ports_cache
+      @ports_cache.find {|port| port[:name] == name}
     end
 
     private
 
     def read_db
+      @ports = []
+      @ports_cache = []
       each_port_entry do |port_name, version, files|
 	@ports << make_port(port_name, version, files)
+	@ports_cache << {:name => port_name, :files => files, :version => version}
       end
     end
 
     def each_port_entry
-      @ports = []
       File.open(DB_PATH) do |f|
 	port_name, version, files = nil, nil, []
 	f.each_line do |line|
