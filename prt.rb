@@ -34,6 +34,9 @@ class Port
   fill :url, :pkgfile
   fill :dependencies, :pkgfile
   fill :group, :pkgfile
+  fill :port_version, :pkgfile
+  fill :port_release, :pkgfile
+  fill :port_sources, :pkgfile
 
   def initialize(name)
     @name = name
@@ -45,6 +48,14 @@ class Port
 
   def pkgfile
     File.join(path, "Pkgfile")
+  end
+
+  def port_full_version
+    [port_version, port_release] * '-'
+  end
+
+  def port_remote_sources
+    port_sources.grep %r[^(?:f|ht)tp://]
   end
 
   private
@@ -65,6 +76,11 @@ class Port
   end
 
   def fill_from_pkgfile
+    fill_from_pkgfile_raw
+    fill_from_pkgfile_via_sh
+  end
+
+  def fill_from_pkgfile_raw
     File.open pkgfile do |f|
       f.each_line do |line|
 	case line
@@ -82,6 +98,14 @@ class Port
       end
     end
     @dependencies ||= []
+  end
+
+  def fill_from_pkgfile_via_sh
+    ret = `(cat #{pkgfile}; echo 'echo $name $version $release ${source[@]}')|sh`
+    name, version, release, *sources = ret.split(/\s+/)
+    @port_version = version
+    @port_release = release
+    @port_sources = sources
   end
 
   def port_db
@@ -235,7 +259,16 @@ if $0 == __FILE__
     p port.maintainer
     p port.url
     p port.dependencies
+    p port.port_full_version
+    p port.port_remote_sources
     # p port
     puts
   end
+
+  def each_dep(port, indent = 0)
+    puts "#{"  " * indent}#{port.name}"
+    port.port_dependencies.each {|dep| each_dep(dep,indent + 1)} 
+  end
+  each_dep Port.new('apache')
+
 end
