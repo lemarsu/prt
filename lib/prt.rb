@@ -86,4 +86,9 @@ class Prt < Bin
     port.download
   end
 
+  command :make, :prereq => :download do |port|
+    puts %[Making files for "#{port.name}"]
+    port.make
+  end
+
 end

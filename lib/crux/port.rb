@@ -71,6 +71,12 @@ module CRUX
       end
     end
 
+    def make
+      Dir.chdir path do
+	system 'pkgmk'
+      end
+    end
+
     private
 
     def fill_from_prtget
