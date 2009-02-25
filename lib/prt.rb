@@ -1,5 +1,7 @@
 class Bin
 
+  @@commands = []
+
   def usage(exitcode = 1)
     puts <<''
     usage: prt <command> [port]
@@ -10,8 +12,8 @@ class Bin
   def main(*args)
     usage 0 if args.size < 1
 
-    commands = public_methods
-    command = args.shift
+    commands = self.class.commands
+    command = args.shift.to_sym
 
     unless commands.include? command
       puts "Unknown command #{command}"
@@ -21,17 +23,55 @@ class Bin
     run_command(command, get_ports(*args))
   end
 
-  def run_command(command, args)
-    send(command, *args)
-  end
-
-  def self.command(name, opts={}, &blk)
-    define_method(name) do |*args|
-      args.each {|port| blk.call port}
+  def run_command(name, args)
+    commands = []
+    command = find_command name
+    until command.nil?
+      raise "command nil !" if command.nil?
+      commands << command
+      if command[:prereq]
+	command = find_command(command[:prereq])
+      else
+	command = nil
+      end
+    end
+    commands.reverse!
+    p commands.map {|c| c[:name]}
+    groupped, straight = commands.partition {|c| c[:groupped]}
+    groupped.each do |command|
+      args.each do |port|
+	command[:block].call port
+      end
+    end
+    args.each do |port|
+      straight.each do |command|
+	command[:block].call port
+      end
     end
   end
 
+  def find_command(name)
+    self.class.find_command(name)
+  end
+
+  def self.find_command(name)
+    @@commands.find {|cn| cn[:name] == name}
+  end
+
+  def self.command(name, opts={}, &blk)
+    @@commands << opts.merge({
+      :name => name,
+      :block => blk
+    })
+  end
+
+  def self.commands
+    @@commands.map {|command| command[:name]}
+  end
+
   private
+
+
 
   def get_ports(*ports)
     ports.map do |port_name|
@@ -82,14 +122,18 @@ class Prt < Bin
     puts [port.name, installed].join(' ')
   end
 
-  command :download do |port|
+  command :download, :groupped => true do |port|
     puts %[Downloading files for "#{port.name}"]
-    port.download
+    # port.download
   end
 
   command :make, :prereq => :download do |port|
     puts %[Making files for "#{port.name}"]
-    port.make
+    # port.make
+  end
+
+  command :install, :prereq => :make do |port|
+    puts %[Installing files for "#{port.name}"]
   end
 
 end
