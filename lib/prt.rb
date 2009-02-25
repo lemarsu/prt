@@ -74,13 +74,11 @@ class Bin
       end
     end
     ports.each do |port|
-      skip_port = false
       straight.each do |command|
-	next if skip_port
 	command.call port
 	if command.error?
 	  puts "Error with #{port.name}"
-	  skip_port = true
+	  break
 	end
       end
     end
