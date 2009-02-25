@@ -3,9 +3,6 @@ class Bin
   @@commands = []
 
   class Error < Exception; end
-  class FetchError < Error; end
-  class MakeError < Error; end
-  class InstallError < Error; end
 
   class Command
     attr_reader :name
@@ -141,6 +138,10 @@ class Bin
 end
 
 class Prt < Bin
+
+  class FetchError < Error; end
+  class MakeError < Error; end
+  class InstallError < Error; end
 
   command :info do |port|
     p port.path
