@@ -87,11 +87,13 @@ class Bin
   end
 
   def show_errors(command_errors)
+    return if command_errors.empty?
     puts
     last_command = nil
     command_errors.each do |ce|
       if last_command != ce.command
 	puts "Errors for command #{ce.command.name}"
+	last_command = ce.command
       end
       puts " - #{ce.port.name}: #{error_message(ce.error)}"
     end
