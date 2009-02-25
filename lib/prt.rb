@@ -232,4 +232,8 @@ class Prt < Bin
     raise InstallError unless port.install
   end
 
+  command :path do |port|
+    puts port.path
+  end
+
 end
