@@ -17,11 +17,10 @@ class Bin
       self.error = false
       @block.call port
     rescue Error => ex
-      # puts "error : #{ex}", ex.message, ex.backtrace
-      self.error = true
-    rescue Exception => ex
-      puts ex, ex.message, ex.backtrace
-      self.error = true
+      self.error = ex
+    # rescue Exception => ex
+    #   puts ex, ex.message, ex.backtrace
+    #   self.error = true
     end
 
     def error?
@@ -65,7 +64,7 @@ class Bin
       ports.each do |port|
 	command.call port
 	if command.error?
-	  puts "Error with #{port.name}"
+	  puts "Error with #{port.name}: #{error_message(command.error)}"
 	  ports.delete port
 	end
       end
@@ -74,7 +73,7 @@ class Bin
       straight.each do |command|
 	command.call port
 	if command.error?
-	  puts "Error with #{port.name}"
+	  puts "Error with #{port.name}: #{error_message(command.error)}"
 	  break
 	end
       end
@@ -94,6 +93,13 @@ class Bin
   end
 
   private
+
+  def error_message(ex)
+    message = ex.class.to_s
+    message += ": #{ex.message}" if ex.message.size > 0 && ex.message != ex.class.to_s
+    # message += ": #{ex.message}" unless ex.message.empty?
+    message
+  end
 
   def command_list(name)
     commands = []
