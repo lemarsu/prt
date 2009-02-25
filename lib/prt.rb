@@ -2,6 +2,9 @@ class Bin
 
   @@commands = []
 
+  class Error < Exception; end
+  class FetchError < Exception; end
+
   def usage(exitcode = 1)
     puts <<''
     usage: prt <command> [port]
@@ -23,35 +26,19 @@ class Bin
     run_command(command, get_ports(*args))
   end
 
-  def run_command(name, args)
-    commands = []
-    command = find_command name
-    until command.nil?
-      raise "command nil !" if command.nil?
-      commands << command
-      if command[:prereq]
-	command = find_command(command[:prereq])
-      else
-	command = nil
-      end
-    end
-    commands.reverse!
-    p commands.map {|c| c[:name]}
-    groupped, straight = commands.partition {|c| c[:groupped]}
+  def run_command(name, ports)
+    commands = command_list(name)
+    groupped, straight = split_groupped_commands(commands)
     groupped.each do |command|
-      args.each do |port|
+      ports.each do |port|
 	command[:block].call port
       end
     end
-    args.each do |port|
+    ports.each do |port|
       straight.each do |command|
 	command[:block].call port
       end
     end
-  end
-
-  def find_command(name)
-    self.class.find_command(name)
   end
 
   def self.find_command(name)
@@ -71,7 +58,34 @@ class Bin
 
   private
 
+  def command_list(name)
+    commands = []
+    command = find_command name
+    until command.nil?
+      commands << command
+      command = command[:prereq] ?
+	find_command(command[:prereq]) : nil
+    end
+    commands.reverse
+  end
 
+  def find_command(name)
+    self.class.find_command(name)
+  end
+
+  def split_groupped_commands(commands)
+    groupped, straight = [], []
+    find_groupped = false
+    commands.reverse.each do |command|
+      if find_groupped || command[:groupped]
+	find_groupped = true
+	groupped.unshift command
+      else
+	straight.unshift command
+      end
+    end
+    [groupped, straight]
+  end
 
   def get_ports(*ports)
     ports.map do |port_name|
