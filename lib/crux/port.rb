@@ -82,9 +82,7 @@ module CRUX
     end
 
     def make
-      Dir.chdir path do
-	system 'pkgmk'
-      end
+      Dir.chdir(path) { system 'pkgmk'}
       return $?.success?
     end
 
