@@ -36,6 +36,8 @@ class Bin
     end
   end
 
+  CommandError = Struct.new(:command, :error, :port)
+
   def usage(exitcode = 1)
     puts <<''
     usage: prt <command> [port]
@@ -60,11 +62,13 @@ class Bin
   def run_command(name, ports)
     commands = command_list(name)
     groupped, straight = split_groupped_commands(commands)
+    command_errors = []
     groupped.each do |command|
       ports.each do |port|
 	command.call port
 	if command.error?
 	  puts "Error with #{port.name}: #{error_message(command.error)}"
+	  command_errors << CommandError.new(command, command.error, port)
 	  ports.delete port
 	end
       end
@@ -74,9 +78,22 @@ class Bin
 	command.call port
 	if command.error?
 	  puts "Error with #{port.name}: #{error_message(command.error)}"
+	  command_errors << CommandError.new(command, command.error, port)
 	  break
 	end
       end
+    end
+    show_errors(command_errors)
+  end
+
+  def show_errors(command_errors)
+    puts
+    last_command = nil
+    command_errors.each do |ce|
+      if last_command != ce.command
+	puts "Errors for command #{ce.command.name}"
+      end
+      puts " - #{ce.port.name}: #{error_message(ce.error)}"
     end
   end
 
