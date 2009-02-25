@@ -52,6 +52,10 @@ module CRUX
       File.join(path, "Pkgfile")
     end
 
+    def package_file
+      File.join(package_dir, "#{name}##{port_full_version}.pkg.tar.gz")
+    end
+
     def port_full_version
       [port_version, port_release] * '-'
     end
@@ -61,20 +65,35 @@ module CRUX
     end
 
     def download
+      errors = 0
       port_remote_sources.each do |source|
 	file_name = File.basename source
 	final_path = File.join(source_dir, file_name)
 	next if File.exists?(final_path)
 	partial_path = final_path + '.partial'
 	system 'wget', '-c', '-O', partial_path, source
-	system 'mv', partial_path, final_path if $?.success?
+	if $?.success?
+	  system 'mv', partial_path, final_path
+	else
+	  errors += 1
+	end
       end
+      errors.zero?
     end
 
     def make
       Dir.chdir path do
 	system 'pkgmk'
       end
+      return $?.success?
+    end
+
+    def install
+      cmd = ['pkgadd']
+      cmd << '-u' if installed?
+      cmd << package_file
+      system *cmd
+      $?.success?
     end
 
     private

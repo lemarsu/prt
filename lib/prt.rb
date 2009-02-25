@@ -204,16 +204,17 @@ class Prt < Bin
 
   command :download, :groupped => true do |port|
     puts %[Downloading files for "#{port.name}"]
-    # port.download
+    raise FetchError unless port.download
   end
 
   command :make, :depends => :download do |port|
     puts %[Making files for "#{port.name}"]
-    # port.make
+    raise MakeError unless port.make
   end
 
   command :install, :depends => :make do |port|
     puts %[Installing files for "#{port.name}"]
+    raise InstallError unless port.install
   end
 
 end
