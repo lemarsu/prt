@@ -60,6 +60,17 @@ module CRUX
       (port_sources||[]).grep %r[^(?:f|ht)tp://]
     end
 
+    def download
+      port_remote_sources.each do |source|
+	file_name = File.basename source
+	final_path = File.join(source_dir, file_name)
+	next if File.exists?(final_path)
+	partial_path = final_path + '.partial'
+	system 'wget', '-c', '-O', partial_path, source
+	system 'mv', partial_path, final_path if $?.success?
+      end
+    end
+
     private
 
     def fill_from_prtget

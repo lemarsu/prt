@@ -81,4 +81,9 @@ class Prt < Bin
     puts [port.name, installed].join(' ')
   end
 
+  command :download do |port|
+    puts %[Downloading files for "#{port.name}"]
+    port.download
+  end
+
 end
