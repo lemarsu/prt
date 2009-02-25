@@ -13,4 +13,10 @@ module CRUX
     port.port_dependencies.each {|dep| each_dep(dep,indent + 1, &blk)}
   end
 
+  def self.outdated
+    CRUX::PortDB.new.ports.select do |port|
+      !port.path.nil? && port.installed_version != port.port_full_version
+    end
+  end
+
 end

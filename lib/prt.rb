@@ -38,6 +38,7 @@ class Bin
       case port_name.downcase
       when "all" : CRUX::PrtGetConf.new.ports
       when "installed" : CRUX::PortDB.new.ports
+      when "outdated" : CRUX.outdated
       else CRUX::Port.new port_name
       end
     end.flatten
