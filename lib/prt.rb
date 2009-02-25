@@ -3,10 +3,13 @@ class Bin
   @@commands = []
 
   class Error < Exception; end
-  class FetchError < Exception; end
+  class FetchError < Error; end
+  class MakeError < Error; end
+  class InstallError < Error; end
 
   class Command
     attr_reader :name
+    attr_accessor :error
     def initialize(name, opts={}, &blk)
       @name = name
       @opts = opts
@@ -14,7 +17,18 @@ class Bin
     end
 
     def call(port)
+      self.error = false
       @block.call port
+    rescue Error => ex
+      # puts "error : #{ex}", ex.message, ex.backtrace
+      self.error = true
+    rescue Exception => ex
+      puts ex, ex.message, ex.backtrace
+      self.error = true
+    end
+
+    def error?
+      @error
     end
 
     def prereq
@@ -53,11 +67,21 @@ class Bin
     groupped.each do |command|
       ports.each do |port|
 	command.call port
+	if command.error?
+	  puts "Error with #{port.name}"
+	  ports.delete port
+	end
       end
     end
     ports.each do |port|
+      skip_port = false
       straight.each do |command|
+	next if skip_port
 	command.call port
+	if command.error?
+	  puts "Error with #{port.name}"
+	  skip_port = true
+	end
       end
     end
   end
