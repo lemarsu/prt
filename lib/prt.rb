@@ -5,6 +5,27 @@ class Bin
   class Error < Exception; end
   class FetchError < Exception; end
 
+  class Command
+    attr_reader :name
+    def initialize(name, opts={}, &blk)
+      @name = name
+      @opts = opts
+      @block = blk
+    end
+
+    def call(port)
+      @block.call port
+    end
+
+    def prereq
+      @opts[:prereq]
+    end
+
+    def groupped?
+      @opts[:groupped]
+    end
+  end
+
   def usage(exitcode = 1)
     puts <<''
     usage: prt <command> [port]
@@ -31,29 +52,26 @@ class Bin
     groupped, straight = split_groupped_commands(commands)
     groupped.each do |command|
       ports.each do |port|
-	command[:block].call port
+	command.call port
       end
     end
     ports.each do |port|
       straight.each do |command|
-	command[:block].call port
+	command.call port
       end
     end
   end
 
   def self.find_command(name)
-    @@commands.find {|cn| cn[:name] == name}
+    @@commands.find {|c| c.name == name}
   end
 
   def self.command(name, opts={}, &blk)
-    @@commands << opts.merge({
-      :name => name,
-      :block => blk
-    })
+    @@commands << Command.new(name, opts, &blk)
   end
 
   def self.commands
-    @@commands.map {|command| command[:name]}
+    @@commands.map {|command| command.name}
   end
 
   private
@@ -63,8 +81,8 @@ class Bin
     command = find_command name
     until command.nil?
       commands << command
-      command = command[:prereq] ?
-	find_command(command[:prereq]) : nil
+      command = command.prereq ?
+	find_command(command.prereq) : nil
     end
     commands.reverse
   end
@@ -77,7 +95,7 @@ class Bin
     groupped, straight = [], []
     find_groupped = false
     commands.reverse.each do |command|
-      if find_groupped || command[:groupped]
+      if find_groupped || command.groupped?
 	find_groupped = true
 	groupped.unshift command
       else
