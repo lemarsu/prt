@@ -27,8 +27,8 @@ class Bin
       @error
     end
 
-    def prereq
-      @opts[:prereq]
+    def depends
+      @opts[:depends]
     end
 
     def groupped?
@@ -123,8 +123,8 @@ class Bin
     command = find_command name
     until command.nil?
       commands << command
-      command = command.prereq ?
-	find_command(command.prereq) : nil
+      command = command.depends ?
+	find_command(command.depends) : nil
     end
     commands.reverse
   end
@@ -205,12 +205,12 @@ class Prt < Bin
     # port.download
   end
 
-  command :make, :prereq => :download do |port|
+  command :make, :depends => :download do |port|
     puts %[Making files for "#{port.name}"]
     # port.make
   end
 
-  command :install, :prereq => :make do |port|
+  command :install, :depends => :make do |port|
     puts %[Installing files for "#{port.name}"]
   end
 
