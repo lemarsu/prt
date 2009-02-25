@@ -36,7 +36,7 @@ class Bin
     end
   end
 
-  CommandError = Struct.new(:command, :error, :port)
+  CommandError = Struct.new(:header, :error, :port)
 
   def usage(exitcode = 1)
     puts <<''
@@ -60,15 +60,18 @@ class Bin
   end
 
   def run_command(name, ports)
+    command_errors = []
+    ports = check_ports(ports, command_errors)
+    return if ports.empty?
     commands = command_list(name)
     groupped, straight = split_groupped_commands(commands)
-    command_errors = []
     groupped.each do |command|
       ports.each do |port|
 	command.call port
 	if command.error?
-	  puts "Error with #{port.name}: #{error_message(command.error)}"
-	  command_errors << CommandError.new(command, command.error, port)
+	  puts "Error with #{error_message(port, command.error)}"
+	  header = "Errors for command #{command.name}"
+	  command_errors << CommandError.new(header, command.error, port)
 	  ports.delete port
 	end
       end
@@ -77,8 +80,9 @@ class Bin
       straight.each do |command|
 	command.call port
 	if command.error?
-	  puts "Error with #{port.name}: #{error_message(command.error)}"
-	  command_errors << CommandError.new(command, command.error, port)
+	  puts "Error with #{error_message(port, command.error)}"
+	  header = "Errors for command #{command.name}"
+	  command_errors << CommandError.new(header, command.error, port)
 	  break
 	end
       end
@@ -89,13 +93,14 @@ class Bin
   def show_errors(command_errors)
     return if command_errors.empty?
     puts
-    last_command = nil
+    puts "Error report:"
+    last_header = nil
     command_errors.each do |ce|
-      if last_command != ce.command
-	puts "Errors for command #{ce.command.name}"
-	last_command = ce.command
+      if last_header != ce.header
+	puts ce.header
+	last_header = ce.header
       end
-      puts " - #{ce.port.name}: #{error_message(ce.error)}"
+      puts " - " + error_message(ce.port, ce.error)
     end
   end
 
@@ -113,9 +118,19 @@ class Bin
 
   private
 
-  def error_message(ex)
-    message = ex.class.to_s
-    message += ": #{ex.message}" if ex.message.size > 0 && ex.message != ex.class.to_s
+  def check_ports(ports, errors)
+    ports.reject do |port|
+      next false if port.exists?
+      puts "Unknown port: #{port.name}"
+      errors << CommandError.new("Unknown ports", nil, port)
+      true
+    end
+  end
+
+  def error_message(port, ex)
+    message = port.name
+    message += ": #{ex.class}" if ex
+    message += ": #{ex.message}" if ex && ex.message.size > 0 && ex.message != ex.class.to_s
     # message += ": #{ex.message}" unless ex.message.empty?
     message
   end

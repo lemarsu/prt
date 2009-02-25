@@ -64,6 +64,10 @@ module CRUX
       (port_sources||[]).grep %r[^(?:f|ht)tp://]
     end
 
+    def exists?
+      !path.nil?
+    end
+
     def download
       errors = 0
       port_remote_sources.each do |source|
